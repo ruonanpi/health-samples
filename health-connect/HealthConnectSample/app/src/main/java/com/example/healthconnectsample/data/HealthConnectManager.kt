@@ -24,20 +24,7 @@ import androidx.health.connect.client.changes.Change
 import androidx.health.connect.client.metadata.DataOrigin
 import androidx.health.connect.client.permission.HealthDataRequestPermissions
 import androidx.health.connect.client.permission.Permission
-import androidx.health.connect.client.records.ActivityEvent
-import androidx.health.connect.client.records.ActivitySession
-import androidx.health.connect.client.records.Distance
-import androidx.health.connect.client.records.HeartRate
-import androidx.health.connect.client.records.HeartRateSeries
-import androidx.health.connect.client.records.Record
-import androidx.health.connect.client.records.SleepSession
-import androidx.health.connect.client.records.SleepStage
-import androidx.health.connect.client.records.Speed
-import androidx.health.connect.client.records.SpeedSeries
-import androidx.health.connect.client.records.Steps
-import androidx.health.connect.client.records.TotalCaloriesBurned
-import androidx.health.connect.client.records.TotalEnergyBurned
-import androidx.health.connect.client.records.Weight
+import androidx.health.connect.client.records.*
 import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.request.ChangesTokenRequest
 import androidx.health.connect.client.request.ReadRecordsRequest
@@ -51,6 +38,7 @@ import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 import kotlin.random.Random
 import kotlin.reflect.KClass
+import kotlin.time.Duration
 
 // The minimum android level that can use Health Connect
 const val MIN_SUPPORTED_SDK = Build.VERSION_CODES.O_MR1
@@ -354,6 +342,66 @@ class HealthConnectManager(private val context: Context) {
         val response = healthConnectClient.aggregate(request)
         return response[Weight.WEIGHT_AVG]
     }
+
+    /*
+    * Returns the projected weight for next time point.
+    * method: linear interpolation  y=y0 +(x-x0)*(y1-y0)/(x1-x0)
+    * assumption: time interval measurements between 3 weight should be same,
+    * if using minutes, then all are measured by minutes. if using hours, then all are measured by hours,
+    * if using days, then all are measured by days. In my view, measured by days is reasonable in real life.
+    * user put the daily weight in app, we can do a projection.
+    * but for testing purpose, here we use minutes to do a projection.
+    * data source: at least 3 consecutive time weight data.
+    *
+     */
+
+    suspend fun computeProjectedWeightDemo(weights: List<Weight>): Double?{
+        if(weights.size >= 3){
+            val last = weights.last()
+            val lastThree = weights.takeLast(3)
+            val zonedDateTime2 =
+                dateTimeWithOffsetOrDefault(last.time, last.zoneOffset)
+            val zonedDateTime0 = dateTimeWithOffsetOrDefault(lastThree[0].time, lastThree[0].zoneOffset)
+            val interval = ChronoUnit.MINUTES.between(zonedDateTime2, zonedDateTime0) //x2-x0
+            val zonedDateTime1 = dateTimeWithOffsetOrDefault(lastThree[1].time, lastThree[1].zoneOffset)
+            val intervalSub = ChronoUnit.MINUTES.between(zonedDateTime1,zonedDateTime0) //x1-x0
+            val weightDiff = lastThree[1].weightKg - lastThree[0].weightKg  //y1-y0
+            val projectedWt = lastThree[0].weightKg + interval*weightDiff/intervalSub  //y0 +(x2-x0)*(y1-y0)/(x1-x0)
+            return projectedWt
+        }
+        return null
+    }
+
+    /*
+    this function is not for demo purpose, dynamically choose the time interval
+     */
+
+    suspend fun computeProjectedWeight(weights: List<Weight>, unit: ChronoUnit): Double?{
+        if(weights.size >= 3){
+            val last = weights.last()
+            val lastThree = weights.takeLast(3)
+            val zonedDateTime2 =
+                dateTimeWithOffsetOrDefault(last.time, last.zoneOffset)
+            val zonedDateTime0 = dateTimeWithOffsetOrDefault(lastThree[0].time, lastThree[0].zoneOffset)
+            val interval = unit.between(zonedDateTime2, zonedDateTime0) //x2-x0
+            val zonedDateTime1 = dateTimeWithOffsetOrDefault(lastThree[1].time, lastThree[1].zoneOffset)
+            val intervalSub = unit.between(zonedDateTime1,zonedDateTime0) //x1-x0
+            val weightDiff = lastThree[1].weightKg - lastThree[0].weightKg  //y1-y0
+            val projectedWt = lastThree[0].weightKg + interval*weightDiff/intervalSub  //y0 +(x2-x0)*(y1-y0)/(x1-x0)
+            return projectedWt
+        }
+        return null
+    }
+
+    fun timeIntervalSelect(){
+
+    }
+
+
+
+
+
+
 
     /**
      * Deletes a [Weight] record.

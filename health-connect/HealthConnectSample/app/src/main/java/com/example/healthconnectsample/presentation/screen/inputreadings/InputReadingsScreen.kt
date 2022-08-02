@@ -23,8 +23,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
@@ -68,7 +70,8 @@ fun InputReadingsScreen(
     onDeleteClick: (String) -> Unit = {},
     onError: (Throwable?) -> Unit = {},
     onPermissionsResult: () -> Unit = {},
-    weeklyAvg: Double?
+    weeklyAvg: Double?,
+    projectWt:Double?
 ) {
     val launcher = rememberLauncherForActivityResult(HealthDataRequestPermissions()) {
         onPermissionsResult()
@@ -203,6 +206,17 @@ fun InputReadingsScreen(
                         Text(text = "$weeklyAvg".take(5) + stringResource(id = R.string.kilograms))
                     }
                 }
+                if(projectWt != null){
+                    item{
+                        Text(text = stringResource(id = R.string.projectWt),fontSize = 24.sp,
+                            color = MaterialTheme.colors.primary,
+                            modifier = Modifier.padding(vertical = 20.dp)
+                        )
+                        if(projectWt != null){
+                            Text(text="$projectWt".take(5) + stringResource(id = R.string.kilograms))
+                        }
+                    }
+                }
             }
         }
     }
@@ -216,6 +230,7 @@ fun InputReadingsScreenPreview() {
         InputReadingsScreen(
             permissions = setOf(),
             weeklyAvg = 54.5,
+            projectWt = 55.5,
             permissionsGranted = true,
             readingsList = listOf(
                 Weight(

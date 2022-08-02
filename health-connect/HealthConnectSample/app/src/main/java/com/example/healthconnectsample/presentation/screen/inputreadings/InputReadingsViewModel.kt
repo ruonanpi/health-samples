@@ -42,6 +42,9 @@ class InputReadingsViewModel(private val healthConnectManager: HealthConnectMana
     var weeklyAvg: MutableState<Double?> = mutableStateOf(0.0)
         private set
 
+    var projectedWt: MutableState<Double?> = mutableStateOf(null)
+        private set
+
     var permissionsGranted = mutableStateOf(false)
         private set
 
@@ -86,10 +89,11 @@ class InputReadingsViewModel(private val healthConnectManager: HealthConnectMana
     private suspend fun readWeightInputs() {
         val startOfDay = ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS)
         val now = Instant.now()
-        val endofWeek = startOfDay.toInstant().plus(7, ChronoUnit.DAYS)
-        readingsList.value = healthConnectManager.readWeightInputs(startOfDay.toInstant(), now)
+        val startOfWeek = startOfDay.toInstant().minus(7, ChronoUnit.DAYS)
+        readingsList.value = healthConnectManager.readWeightInputs(startOfWeek, now)
         weeklyAvg.value =
-            healthConnectManager.computeWeeklyAverage(startOfDay.toInstant(), endofWeek)
+            healthConnectManager.computeWeeklyAverage(startOfWeek, now)
+        projectedWt.value = healthConnectManager.computeProjectedWeightDemo(readingsList.value)
     }
 
     /**
