@@ -164,6 +164,7 @@ fun HealthConnectNavigation(
             val readingsList by viewModel.readingsList
             val permissions = viewModel.permissions
             val weeklyAvg by viewModel.weeklyAvg
+            val projectedWt by viewModel.projectedWt
             InputReadingsScreen(
                 permissionsGranted = permissionsGranted,
                 permissions = permissions,
@@ -172,6 +173,7 @@ fun HealthConnectNavigation(
                     viewModel.inputReadings(weightInput)
                 },
                 weeklyAvg = weeklyAvg,
+                projectWt = projectedWt,
                 onDeleteClick = { uid ->
                     viewModel.deleteWeightInput(uid)
                 },

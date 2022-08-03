@@ -107,6 +107,7 @@
     <string name="weekly_avg"> Weekly Average </string>
     <string name="kilograms">Kg\u0020</string>
     <string name="valid_weight_error_message"> Weight must be between 0 and 1000</string>
+    <string name="projectWt">Projected Weight</string>
 
     <!-- Differential changes screen -->
     <string name="differential_changes_title_text">Enabling differential change tracking obtains a token that can be used later for obtaining any subsequent changes</string>
