@@ -439,15 +439,7 @@ class HealthConnectManager(private val context: Context) {
         }
         return null
     }
-
-
-
-
-
-
-
-
-
+    
     /**
      * Deletes a [Weight] record.
      */

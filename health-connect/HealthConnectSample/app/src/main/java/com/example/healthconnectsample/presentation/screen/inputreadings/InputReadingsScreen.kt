@@ -71,7 +71,7 @@ fun InputReadingsScreen(
     onError: (Throwable?) -> Unit = {},
     onPermissionsResult: () -> Unit = {},
     weeklyAvg: Double?,
-    projectWt:Double?
+    projectWt: Double?
 ) {
     val launcher = rememberLauncherForActivityResult(HealthDataRequestPermissions()) {
         onPermissionsResult()
