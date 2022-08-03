@@ -373,10 +373,15 @@ class HealthConnectManager(private val context: Context) {
     }
 
     /*
-    this function is not for demo purpose, dynamically choose the time interval
+    this function is not for demo purpose, dynamically choose the time interval By user
+    if user does the daily measurement, choose ChronoUnit.Days
+    if user does the hourly measurement, choose ChronoUnit.Hours
+    for this measurement frequency, we need to implement some functionality for the UI part.
+    for example, if user do daily measurement, after user input one weight for the day, we can disable add button till next day. Or throw an error: you already input weight for today, do not input twice. But you can edit your input.
+    to force user do the projection on daily bases.
      */
 
-    suspend fun computeProjectedWeight(weights: List<Weight>, unit: ChronoUnit): Double?{
+    suspend fun computeProjectedWeightLinear(weights: List<Weight>, unit: ChronoUnit): Double?{
         if(weights.size >= 3){
             val last = weights.last()
             val lastThree = weights.takeLast(3)
@@ -393,9 +398,44 @@ class HealthConnectManager(private val context: Context) {
         return null
     }
 
-    fun timeIntervalSelect(){
+    /*
+    using Lagrange Polynomial interpolation ( Degree of Polynomial is smaller than 6)
+     */
+    suspend fun computeProjectedWeightPolynomial(weights: List<Weight>, unit: ChronoUnit): Double?{
+        if(weights.size >= 3){
+            var wts: MutableList<Double> = mutableListOf()
+            var times: MutableList<Long> = mutableListOf()
+            val startTime = dateTimeWithOffsetOrDefault(weights[0].time, weights[0].zoneOffset)
+            for(weight in weights){
+                wts.add(weight.weightKg)
+                val time = dateTimeWithOffsetOrDefault(weight.time, weight.zoneOffset)
+                val dif = unit.between(time, startTime)
+                times.add(dif)
+            }// obtain a (x,y) list: (x0, y0), (x1, y1), ....
 
+            if(wts.size > 6){
+                wts = wts.takeLast(6) as MutableList<Double>
+                times = times.takeLast(6) as MutableList<Long>
+            }// always use the most recent 6 points if the input data is longer than 6 to avoid too high degree polynomial interpolation
+            var cur = 0.0
+            for(index in wts.indices-1){ // the last weight not include(we need to do projection)
+                var prefixUp = 1.0
+                var prefixDown = 1.0
+                for(i in times.indices-1){
+                    if(index != i){
+                        prefixUp *= (times.last() -times[i])
+                        prefixDown *= (times[index]-times[i])
+                    }
+                }
+                var prefix = prefixUp/prefixDown
+                cur += wts[index] * prefix  //y = y0*(x-x1)(x-x2)../(x0-x1)(x0-x2).. +...
+            }
+            return cur
+        }
+        return null
     }
+
+
 
 
 
