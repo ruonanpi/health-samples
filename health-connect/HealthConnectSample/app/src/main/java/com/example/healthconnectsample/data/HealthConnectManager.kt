@@ -401,10 +401,17 @@ class HealthConnectManager(private val context: Context) {
     /*
     using Lagrange Polynomial interpolation ( Degree of Polynomial is smaller than 6)
      */
-    suspend fun computeProjectedWeightPolynomial(weights: List<Weight>, unit: ChronoUnit): Double?{
-        if(weights.size >= 3){
+    suspend fun computeProjectedWeightPolynomial(weightsList: List<Weight>, unit: ChronoUnit): Double?{
+        if(weightsList.size >= 3){
             var wts: MutableList<Double> = mutableListOf()
             var times: MutableList<Long> = mutableListOf()
+            var weights: MutableList<Weight> = mutableListOf()
+            if(weightsList.size > 6){// always use the most recent 6 points if the input data is longer than 6 to avoid too high degree polynomial interpolation
+                 weights = weightsList.takeLast(6) as MutableList<Weight>
+            }
+            else{
+                weights = weightsList as MutableList<Weight>
+            }
             val startTime = dateTimeWithOffsetOrDefault(weights[0].time, weights[0].zoneOffset)
             for(weight in weights){
                 wts.add(weight.weightKg)
@@ -412,16 +419,14 @@ class HealthConnectManager(private val context: Context) {
                 val dif = unit.between(time, startTime)
                 times.add(dif)
             }// obtain a (x,y) list: (x0, y0), (x1, y1), ....
-
-            if(wts.size > 6){
-                wts = wts.takeLast(6) as MutableList<Double>
-                times = times.takeLast(6) as MutableList<Long>
-            }// always use the most recent 6 points if the input data is longer than 6 to avoid too high degree polynomial interpolation
+            println(wts)
+            println(times)
             var cur = 0.0
-            for(index in wts.indices-1){ // the last weight not include(we need to do projection)
+            val size = wts.size-1
+            for(index in 0 until size){ // the last weight not include(we need to do projection)
                 var prefixUp = 1.0
                 var prefixDown = 1.0
-                for(i in times.indices-1){
+                for(i in 0 until size){
                     if(index != i){
                         prefixUp *= (times.last() -times[i])
                         prefixDown *= (times[index]-times[i])

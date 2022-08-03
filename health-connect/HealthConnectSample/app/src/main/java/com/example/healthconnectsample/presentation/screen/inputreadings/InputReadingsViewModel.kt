@@ -93,8 +93,8 @@ class InputReadingsViewModel(private val healthConnectManager: HealthConnectMana
         readingsList.value = healthConnectManager.readWeightInputs(startOfWeek, now)
         weeklyAvg.value =
             healthConnectManager.computeWeeklyAverage(startOfWeek, now)
-        //projectedWt.value = healthConnectManager.computeProjectedWeightDemo(readingsList.value)
-        projectedWt.value = healthConnectManager.computeProjectedWeightPolynomial(readingsList.value, ChronoUnit.MINUTES)
+        projectedWt.value = healthConnectManager.computeProjectedWeightDemo(readingsList.value)
+       // projectedWt.value = healthConnectManager.computeProjectedWeightPolynomial(readingsList.value, ChronoUnit.MINUTES)
     }
 
     /**
